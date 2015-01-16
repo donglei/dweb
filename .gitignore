@@ -1,0 +1,13 @@
+.dub
+docs.json
+__dummy.html
+*.o
+*.obj
+*.dll
+dweb_d.exe
+dweb.sln
+dweb.v11.suo
+dweb.visualdproj
+vibe-d.visualdproj
+dweb_d.pdb
+dweb_d.exe_cv
