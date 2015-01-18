@@ -1,9 +1,11 @@
 import vibe.d;
 import vibe.http.router;
 import vibe.core.log;
-
+import std.stdio;
 import dweb.router;
 import conf.app;
+import dweb.common;
+import controller.base;
 
 shared static this()
 {
@@ -12,10 +14,11 @@ shared static this()
 	auto router = new URLRouter;
 	auto appConfig = new AppConfig();//路由等其他设置
 	//处理自定义路由
-
 	router.registerDwebRouter(appConfig.getRouteInfos());
 
-	router.get("*", serveStaticFiles("./public/"));
+	router.get("/static/*", serveStaticFiles("public/"));
+ 
+
 
 	auto settings = new HTTPServerSettings;
 	settings.port = 8080;
