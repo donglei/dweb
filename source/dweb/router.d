@@ -8,6 +8,7 @@ import vibe.http.form;
 import controller.base;
 import vibe.web.common;
 import std.typecons;
+import std.string;
 
 import std.stdio;
 
@@ -54,11 +55,31 @@ class DwebRouter{
 		}
 		foreach( route ; this.routInfo)
 		{
+			void handler(HTTPServerRequest req, HTTPServerResponse res)
+			{
+				
+				import std.variant;
+				import std.uni;
+				import std.string;
+				//检查module controller action 是否存在
+				//importModule!(route.ModuleName);
+				
+			
+				auto controllName = route.ControllerName ==":controller" ? this.getControllerName(req.params["controller"]) : route.ControllerName;
+				auto actionName = route.MethodName ==":action" ? this.getActionName(req.params["action"]) : route.MethodName;
+				enforceBadRequest(false, "No method found that matches the found form data:\n Module:"~route.ModuleName~", Controller:"~controllName~",Action:"~actionName);
+				//try{
+					auto controller = this.findController(route.ModuleName ~ "." ~ controllName);
+					auto params=variantArray(req,res);
+					auto result = controller.callAction(actionName, params);
+				////}catch{
+					enforceBadRequest(false, "No method found that matches the found form data:\n Module:"~route.ModuleName~", Controller:"~controllName~",Action:"~actionName);
+				//}
+			}
+
 			switch(route.method){
 				case HTTPMethod.GET:
-					auto controller = this.findController(route.ModuleName ~ "." ~ route.ControllerName);
-					this.registerCustomRouteInterface(controller, route.Path, route.MethodName);
-					writeln(controller.toString(), route.Path, route.MethodName);
+					this.router.get(route.Path, &handler);
 					break;
 				case HTTPMethod.POST:
 					logInfo("method post");
@@ -69,35 +90,28 @@ class DwebRouter{
 			}
 		}
 	}
-	const Object findController(string class_name)
+	const IController findController(string class_name)
 	{
-		const ClassInfo c = ClassInfo.find(class_name);
-		return c.create();
+		//const ClassInfo c = ClassInfo.find(class_name);
+		//return c.create();
+		auto controller = cast (IController)Object.factory(class_name);
+		return controller;
+	}
+	//获取格式化的ControllerName index => IndexController
+	private string getControllerName(string controllerName)
+	{
+		return capitalize(controllerName)~"Controller";
+	}
+	////获取格式化的ControllerName index => IndexController
+	private string getActionName(string actionName)
+	{
+		return toLower(actionName);
 	}
 
-	void registerCustomRouteInterface(I)(I instance, string url_prefix, string method)
-	{
-
-		
-		import std.stdio;
-		void handler(HTTPServerRequest req, HTTPServerResponse res)
-		{
-			import std.traits;
-			//		alias MemberFunctionsTuple!(T, method) overloads;
-			string errors;
-			foreach(func; __traits(getVirtualMethods,instance, method)) {
-				string error;
-				ReturnType!func delegate(ParameterTypeTuple!func) myoverload=&__traits(getMember, instance, method);
-				if(applyParametersFromAssociativeArray!func(req, res, myoverload, error, strict)) {
-					return;
-				}
-				errors~="Overload "~method~typeid(ParameterTypeTuple!func).toString()~" failed: "~error~"\n\n";
-			}
-			enforceBadRequest(false, "No method found that matches the found form data:\n"~errors);
-		}
-
-		router.get(url_prefix, &handler);
-
-	}
  
+}
+
+template importModule(string moduleName)
+{
+	mixin("import "~moduleName~";");
 }

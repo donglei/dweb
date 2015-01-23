@@ -1,0 +1,7 @@
+﻿!!! 5
+html
+	head
+		title #{pageTitle}
+
+	body
+		p success...	

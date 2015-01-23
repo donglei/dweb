@@ -17,7 +17,7 @@ shared static this()
 	router.registerDwebRouter(appConfig.getRouteInfos());
 
 	router.get("/static/*", serveStaticFiles("public/"));
- 
+
 
 
 	auto settings = new HTTPServerSettings;
